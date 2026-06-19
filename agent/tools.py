@@ -2,6 +2,7 @@ import os
 import time
 import logging
 from typing import Optional, Union
+from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright, Locator, Browser, BrowserContext, Page
 
 logger = logging.getLogger("agent.tools")
@@ -90,7 +91,24 @@ class PlaywrightBrowserManager:
             timestamp = int(time.time())
             final_filename = f"{base}_{timestamp}{ext}"
             
-            path = os.path.abspath(os.path.join(self.screenshots_dir, final_filename))
+            # Extract domain to create target website subdirectory
+            domain = "unknown"
+            try:
+                current_url = self.page.url
+                parsed = urlparse(current_url)
+                netloc = parsed.netloc or "unknown"
+                if netloc.startswith("www."):
+                    netloc = netloc[4:]
+                domain = "".join(c for c in netloc if c.isalnum() or c in (".", "-", "_"))
+                if not domain:
+                    domain = "unknown"
+            except Exception:
+                pass
+                
+            subfolder = os.path.join(self.screenshots_dir, domain)
+            os.makedirs(subfolder, exist_ok=True)
+            
+            path = os.path.abspath(os.path.join(subfolder, final_filename))
             self.page.screenshot(path=path)
             msg = f"Screenshot saved successfully at {path}"
             logger.info(msg)
