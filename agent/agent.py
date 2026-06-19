@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 import time
 import agent.config as config
 from agent.tools import PlaywrightBrowserManager, GROK_TOOLS
@@ -13,8 +14,13 @@ root_logger.setLevel(logging.INFO)
 # Clear any default handlers to avoid duplicates
 root_logger.handlers = []
 
-# File Handler - saves everything (INFO and above) to the background log file
-file_handler = logging.FileHandler(os.path.join(config.LOGS_DIR, "agent.log"), encoding="utf-8")
+# File Handler - saves everything (INFO and above) with a 1MB rotation threshold and 3 backups
+file_handler = RotatingFileHandler(
+    os.path.join(config.LOGS_DIR, "agent.log"),
+    encoding="utf-8",
+    maxBytes=1024 * 1024, # 1 MB limit
+    backupCount=3
+)
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
 root_logger.addHandler(file_handler)
