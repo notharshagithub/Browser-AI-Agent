@@ -4,25 +4,6 @@ BrowseIQ is a runtime, LLM-driven browser automation agent that runs in a conver
 
 ---
 
-## 🚀 Core Capabilities & Features
-
-Here is a breakdown of what BrowseIQ can do:
-
-* **Persistent Browser Sessions**: The browser stays open across consecutive tasks, maintaining cookies, scrolling states, login sessions, and form data. You can perform multi-step operations on the same page.
-* **Semantic Selector Parsing**: Discards layout elements (like nested svgs or wrapper spans) and extracts active buttons, links, dropdowns, and text inputs to build a compact representation of the page.
-* **Robust Actuators & Actions**:
-  * **Self-Healing Clicks**: Executes standard clicks, falls back to forced clicks if blocked by overlay banners/modals, and retries via raw mouse coordinates if standard actions fail.
-  * **Keystroke Emulation**: Emulates keyboard typing (focusing, clearing via `Ctrl+A` + `Backspace`, and entering text key-by-key) if standard input filling is blocked.
-  * **Scroll & Wheel Control**: Executes page scrolls and emulates scroll-wheel ticks to trigger lazy loaders and infinite scrolling.
-* **Auto-Recovery & Self-Healing**: Checks the connection health on every step. If the browser window crashes or is closed, it automatically launches a new Chromium process, restarts the session, and re-navigates.
-* **Organized Telemetry & Screenshots**: 
-  * Captures exactly one proof screenshot per task (success or failure) to avoid folder clutter.
-  * Groups screenshots automatically in host-specific subdirectories based on target domains (e.g. `screenshots/google.com/`).
-* **Provider Auto-Routing**: Automatically routes queries to Groq Cloud LPUs or xAI Grok by parsing API key prefixes (`gsk_` vs. `xai-`).
-* **Dynamic Styling Console Themes**: Choose between visual aesthetics like cyberpunk (neon cyan/pink), matrix (terminal green), or retro (amber orange) using CLI flags.
-
----
-
 ## 🛠️ The Tech Stack
 
 I used the following tools to build this agent:
@@ -236,3 +217,28 @@ If the browser window is closed mid-session, the agent's health checker detects 
 
 ### 3. Click Blocks
 If cookie banners or overlays intercept clicks, BrowseIQ retries with `force=True` and falls back to absolute coordinate mouse clicks if needed.
+
+---
+
+## 📝 Example Prompts and Supported Instructions
+
+BrowseIQ resolves natural English prompts into precise browser actions. Here are examples of instructions you can enter at the task console prompt:
+
+* **Site Navigation**:
+  * *"Go to github.com"*
+  * *"Navigate to the search page"*
+* **Clicking & Selection**:
+  * *"Click on the search box"*
+  * *"Click the button labeled 'Submit'"*
+  * *"Click the second link under the search results"*
+* **Form Inputs & Typing**:
+  * *"Type 'playwright documentation' into the search input and hit the search button"*
+  * *"Fill the Name field with 'Jane Doe' and set the description to 'Test Run'"*
+* **Scrolling**:
+  * *"Scroll down to load more results"*
+  * *"Scroll back to the top of the page"*
+* **Double Clicking**:
+  * *"Double click the main header text"*
+* **Ending Tasks**:
+  * *"Once you submit the form successfully, complete the task"*
+  * *"Confirm the success message is visible, take a final screenshot, and finish"*
