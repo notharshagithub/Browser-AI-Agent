@@ -41,7 +41,7 @@ class TestTheme(unittest.TestCase):
         output = mock_stdout.getvalue()
         self.assertIn("B R O W S E R", output)
         self.assertIn("A U T O M A T I O N", output)
-        self.assertIn("⚡ CORE INTERFACES", output)
+        self.assertIn("⚡ BrowseIQ UI Console", output)
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_status_card(self, mock_stdout):

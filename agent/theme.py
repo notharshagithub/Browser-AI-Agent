@@ -126,11 +126,11 @@ def print_welcome_banner():
     print(f"{CYAN}{BOLD}{CORNER_BL}{DOUBLE_LINE * (width-2)}{CORNER_BR}{RESET}\n")
     
     # Quick Instructions Card
-    print(f"  {MAGENTA}{BOLD}⚡ CORE INTERFACES{RESET}")
-    print(f"  {GRAY}├─{RESET} {GREEN}{BOLD}Link Input{RESET}   : Enter URL (e.g. {CYAN}google.com{RESET}) or press {YELLOW}Enter{RESET} for default target.")
-    print(f"  {GRAY}├─{RESET} {GREEN}{BOLD}Task Prompts{RESET} : Instruct the agent in plain English.")
-    print(f"  {GRAY}├─{RESET} {GREEN}{BOLD}Session Exit{RESET} : Type {RED}'exit'{RESET} to switch websites; {RED}'stop'{RESET} to close session.")
-    print(f"  {GRAY}└─{RESET} {GREEN}{BOLD}Status Log{RESET}   : Real-time telemetry is streamed to {BLUE}logs/agent.log{RESET}\n")
+    print(f"  {MAGENTA}{BOLD}⚡ BrowseIQ UI Console{RESET}")
+    print(f"  {GRAY}•{RESET} Enter a URL to connect.")
+    print(f"  {GRAY}•{RESET} Type tasks in plain English.")
+    print(f"  {GRAY}•{RESET} Type {RED}'exit'{RESET} to switch target sites; {RED}'stop'{RESET} to quit.")
+    print(f"  {GRAY}•{RESET} Detailed logs saved in {BLUE}logs/agent.log{RESET}\n")
     print_horizontal_divider(SINGLE_LINE, CYAN)
 
 def print_status_card(title: str, url: str, status: str = "STANDBY"):
@@ -173,17 +173,47 @@ def print_step_header(step: int, max_steps: int, global_step: int):
     
     print(f"\n{CYAN}{BOLD}┠─{RESET}{YELLOW}{BOLD}{step_info}{RESET}{GRAY}┫{RESET} {bar} {GRAY}┣{RESET}{CYAN}{BOLD}{glob_info}{RESET}{GRAY}{SINGLE_LINE * remaining}{RESET}")
 
+def get_semantic_description(name: str, arguments: dict) -> str:
+    """Helper to convert raw tool calls into readable plain English descriptions."""
+    if name == "click_on_screen":
+        x, y = arguments.get("x"), arguments.get("y")
+        return f"Clicking screen at ({x}, {y})"
+    elif name == "send_keys":
+        selector = arguments.get("selector", "")
+        text = arguments.get("text", "")
+        if len(text) > 15:
+            text = text[:12] + "..."
+        return f"Entering '{text}' into '{selector}'"
+    elif name == "scroll":
+        direction = arguments.get("direction", "down")
+        return f"Scrolling {direction}"
+    elif name == "double_click":
+        selector = arguments.get("selector", "")
+        return f"Double-clicking '{selector}'"
+    elif name == "navigate_to_url":
+        url = arguments.get("url", "")
+        return f"Navigating to {url}"
+    elif name == "take_screenshot":
+        return "Capturing screenshot"
+    elif name == "task_complete":
+        return "Acknowledging completion"
+    return f"Executing {name}"
+
 def print_tool_execution(name: str, arguments: dict):
     """Displays a clean tool invocation report."""
-    args_str = ", ".join(f"{BLUE}{k}{RESET}={YELLOW}{repr(v)}{RESET}" for k, v in arguments.items())
-    print(f"  {MAGENTA}▶ EXECUTING ACTUATOR:{RESET} {BOLD}{name}{RESET}({args_str})")
+    desc = get_semantic_description(name, arguments)
+    print(f"  ⚡ {desc} ... ", end="", flush=True)
 
 def print_tool_observation(result: dict):
     """Prints the observation output of a tool execution."""
     success = result.get("success", False)
-    marker = f"{GREEN}✔ SUCCESS{RESET}" if success else f"{RED}✘ FAILED{RESET}"
-    msg = result.get("message", result.get("error", "No message details provided."))
-    print(f"  {GRAY}└─{RESET} {marker} : {msg}")
+    if success:
+        print(f"{GREEN}✔ Done{RESET}")
+    else:
+        msg = result.get("message", result.get("error", "Failed"))
+        if len(msg) > 50:
+            msg = msg[:47] + "..."
+        print(f"{RED}✘ Error: {msg}{RESET}")
 
 def print_success_card(summary: str):
     """Displays a stylized success dashboard."""
