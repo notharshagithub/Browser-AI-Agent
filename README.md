@@ -215,3 +215,19 @@ During the run, the agent automatically captures and saves screenshots in the `s
 1. **Explicit Request**: If your task description explicitly asks for a screenshot (e.g. *"take a screenshot of the toast notification"*), it saves that image and skips the automatic coordinator screenshot.
 2. **Fallback Proof**: If no screenshot is requested in the task description, the coordinator automatically takes exactly one success/failure screenshot at the end of execution (e.g., `task_1_success.png` or `task_1_failure.png`).
 3. **Debug/Error States**: Captured automatically if a fatal code exception occurs.
+
+---
+
+## ❓ Troubleshooting and FAQ
+
+### 1. API Rate Limits (Groq 429 Errors)
+*   **Symptom:** Terminal shows `WARNING: API Rate Limit hit... Backing off for 10 seconds`.
+*   **Solution:** Groq's free tier has strict rate limits. The agent automatically detects these limit limits, halts execution for 10 seconds, and retries the operation. No manual action is required.
+
+### 2. Browser process has been closed
+*   **Symptom:** The Chromium window is closed by accident, and standard actions report errors.
+*   **Solution:** The agent is self-healing. Before navigating or performing any task, it checks session health. If it detects the browser was closed, it automatically launches a fresh window and re-navigates back to your target URL.
+
+### 3. Click pointer-interception blocks
+*   **Symptom:** A cookie notice, sheet overlay, or modal blocks an element.
+*   **Solution:** Playwright tools will catch this interception, retry using `force=True`, and if that fails, trigger a raw mouse click at the element center coordinates to bypass standard visibility guards.
