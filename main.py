@@ -8,14 +8,18 @@ def main():
     # Ensure standard logging is set up
     logger = logging.getLogger("main")
     
-    print("\n==================================================================")
-    print("  🤖 WELCOME TO THE AI WEBSITE AUTOMATION AGENT CONSOLE")
-    print("==================================================================")
-    print("  Instructions:")
-    print("  1. Press Enter to load the default target (Google), or type a URL.")
-    print("  2. Enter website tasks in plain English (e.g. 'search for ...').")
-    print("  3. Type 'exit' to switch websites, or 'stop' to exit completely.")
-    print("==================================================================\n")
+    CYAN = "\033[36m"
+    GREEN = "\033[32m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+    print(f"\n{CYAN}{BOLD}=================================================================={RESET}")
+    print(f"{CYAN}{BOLD}  🤖 WELCOME TO THE AI WEBSITE AUTOMATION AGENT CONSOLE{RESET}")
+    print(f"{CYAN}{BOLD}=================================================================={RESET}")
+    print(f"  {BOLD}Instructions:{RESET}")
+    print(f"  1. Press {GREEN}Enter{RESET} to load the default target (Google), or type a URL.")
+    print(f"  2. Enter website tasks in plain English (e.g. 'search for ...').")
+    print(f"  3. Type {CYAN}'exit'{RESET} to switch websites, or {CYAN}'stop'{RESET} to exit completely.")
+    print(f"{CYAN}{BOLD}=================================================================={RESET}\n")
     
     # Initialize the persistent agent
     agent = WebsiteAutomationAgent()
