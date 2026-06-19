@@ -4,6 +4,25 @@ BrowseIQ is a runtime, LLM-driven browser automation agent that runs in a conver
 
 ---
 
+## 🚀 Core Capabilities & Features
+
+Here is a breakdown of what BrowseIQ can do:
+
+* **Persistent Browser Sessions**: The browser stays open across consecutive tasks, maintaining cookies, scrolling states, login sessions, and form data. You can perform multi-step operations on the same page.
+* **Semantic Selector Parsing**: Discards layout elements (like nested svgs or wrapper spans) and extracts active buttons, links, dropdowns, and text inputs to build a compact representation of the page.
+* **Robust Actuators & Actions**:
+  * **Self-Healing Clicks**: Executes standard clicks, falls back to forced clicks if blocked by overlay banners/modals, and retries via raw mouse coordinates if standard actions fail.
+  * **Keystroke Emulation**: Emulates keyboard typing (focusing, clearing via `Ctrl+A` + `Backspace`, and entering text key-by-key) if standard input filling is blocked.
+  * **Scroll & Wheel Control**: Executes page scrolls and emulates scroll-wheel ticks to trigger lazy loaders and infinite scrolling.
+* **Auto-Recovery & Self-Healing**: Checks the connection health on every step. If the browser window crashes or is closed, it automatically launches a new Chromium process, restarts the session, and re-navigates.
+* **Organized Telemetry & Screenshots**: 
+  * Captures exactly one proof screenshot per task (success or failure) to avoid folder clutter.
+  * Groups screenshots automatically in host-specific subdirectories based on target domains (e.g. `screenshots/google.com/`).
+* **Provider Auto-Routing**: Automatically routes queries to Groq Cloud LPUs or xAI Grok by parsing API key prefixes (`gsk_` vs. `xai-`).
+* **Dynamic Styling Console Themes**: Choose between visual aesthetics like cyberpunk (neon cyan/pink), matrix (terminal green), or retro (amber orange) using CLI flags.
+
+---
+
 ## 🛠️ The Tech Stack
 
 I used the following tools to build this agent:
