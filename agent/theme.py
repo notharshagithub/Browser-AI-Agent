@@ -105,13 +105,17 @@ def print_welcome_banner():
     
     # ASCII Art banner
     banner = [
-        r" ____                                  ___  ___  ",
+        r" ____                                  ___  ___",
         r"| __ ) _ __ _____      _____  ___     |_ _/ _ \ ",
         r"|  _ \| '__/ _ \ \ /\ / / __|/ _ \     | | | | |",
         r"| |_) | | | (_) \ V  V /\__ \  __/     | | |\_| |",
         r"|____/|_|  \___/ \_/\_/ |___/\___|    |___\__\_\|",
-        r"  >> B R O W S E R  -  A I  -  A U T O M A T I O N   "
+        r"  >> B R O W S E R  -  A I  -  A U T O M A T I O N"
     ]
+    
+    # Normalize lengths to ensure perfect alignment when centering
+    max_line_len = max(len(line) for line in banner)
+    banner = [line.ljust(max_line_len) for line in banner]
     
     print(f"\n{CYAN}{BOLD}{CORNER_TL}{DOUBLE_LINE * (width-2)}{CORNER_TR}{RESET}")
     for line in banner:
