@@ -1,47 +1,57 @@
 # BrowseIQ
 
-BrowseIQ is a production-quality, runtime LLM-driven browser automation agent built by **Harsha Shetty** (@notharshagit) for a university Gen-AI assignment. 
-
-The agent operates on a **perceive-decide-act** loop: it visually inspects the page, extracts a compact set of interactive elements, sends this state to the LLM (Grok/Llama), decides which browser actions to call next (using native function-calling tools), and executes them via Playwright.
+BrowseIQ is a runtime, LLM-driven browser automation agent that runs in a conversational loop. I built this project for a university Gen-AI assignment to show how LLMs can act as cognitive controllers to navigate the web, fill forms, and run consecutive tasks autonomously using Playwright.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ The Tech Stack
 
-*   **Browser Automation**: [Playwright (Python Sync API)](https://playwright.dev/python/)
-*   **Cognitive Brain**: [xAI Grok](https://x.ai) / [Groq Cloud LPU](https://groq.com) (using OpenAI Python SDK compatibility)
-*   **Image Processing**: [Pillow](https://python-pillow.org/) (for compressing screenshots to control token usage)
-*   **Config Management**: [python-dotenv](https://github.com/theofidry/django-dotenv-filename)
+I used the following tools to build this agent:
+* **Browser Automation**: Playwright (using the Python Sync API)
+* **LLM Engine**: xAI Grok or Groq Cloud LPUs (using standard OpenAI SDK client compatibility)
+* **Image Handling**: Pillow (for resizing screenshots to keep token costs down)
+* **Config Handling**: python-dotenv for managing environment variables and secrets
 
 ---
 
 ## 📂 Project Structure
 
+Here is how the project files are laid out:
 ```text
 BrowseIQ/
 ├── agent/
 │   ├── __init__.py
-│   ├── config.py         # Loads configuration and handles key auto-routing
-│   ├── tools.py          # Implementations of the 7 Playwright-backed browser tools
-│   ├── llm_client.py     # Groq/xAI API client, handles function-calling & history compaction
-│   └── agent.py          # Perceive-decide-act loop execution & system prompt
-├── tests/                # Unit test files
-│   └── test_config.py    # Unit tests for settings loading
-├── screenshots/          # Saved timestamped run screenshots (before/after/proofs)
+│   ├── config.py         # Config loader and key auto-routing
+│   ├── tools.py          # Implementations of the Playwright-backed browser tools
+│   ├── llm_client.py     # Groq/xAI API client with vision compression & history compaction
+│   ├── theme.py          # Dynamic console styling themes & visual status cards
+│   └── agent.py          # The core perceive-decide-act task loop
+├── tests/                # Unit test suites
+│   ├── test_config.py    
+│   ├── test_theme.py     
+│   └── test_agent.py     
+├── screenshots/          # Saved runtime screenshots grouped by target website domain
 ├── logs/                 # Console logs written to logs/agent.log
-├── main.py               # Main entrypoint script
-├── run_demo.sh           # Bootstrap script to launch agent loop in one click
-├── requirements.txt      # Python dependencies
+├── main.py               # Main CLI console entrypoint
+├── run_demo.sh           # Bootstrap script to launch app quickly
+├── requirements.txt      # Project dependencies
 ├── .env                  # Environment secrets (ignored from Git)
-├── .env.example          # Environment template
-└── README.md             # Complete setup, running, and architecture documentation
+├── .env.example          # Template for environment settings
+└── README.md             # This documentation
 ```
 
 ---
 
-## 🔁 The Perceive-Decide-Act Loop
+## 🔁 The Core Loop (How It Works)
 
-The core architecture follows a standard agentic cycle inspired by systems like *Browser Use* and *OpenAI Agents SDK*.
+BrowseIQ runs on a straightforward **perceive-decide-act** cycle. 
+
+1. **Setup**: The coordinator starts the browser manager and navigates to the starting URL.
+2. **Perceive**: It takes a screenshot and extracts the active interactive elements on the page.
+3. **Decide**: The state (screenshot + clean interactive elements lists) is compressed and sent to the LLM. The LLM decides what action (like click or type) to perform next.
+4. **Act**: The browser manager executes the action, appends the result to history, and checks if the task is complete.
+
+Here is a visual map of the cycle:
 
 ```mermaid
 sequenceDiagram
@@ -92,106 +102,88 @@ sequenceDiagram
 
 ---
 
-## 🎨 Design Decisions
+## 🎨 Design and Engineering Notes
 
-### 1. Choice of Grok (xAI) and Groq API
-*   **xAI Grok** provides state-of-the-art vision reasoning and API compatibility with standard OpenAI SDK endpoints.
-*   **Groq Cloud** provides high-speed LPU inference, allowing near-instantaneous agent response loops ideal for interactive demos.
-*   **Smart Fallback**: The client (`agent/config.py` and `agent/llm_client.py`) dynamically detects key prefixes (e.g., `gsk_` vs. `xai-`) to select the appropriate endpoint and model.
+### 1. Multi-Provider LLM Integration
+I integrated standard OpenAI compatibility so the agent can route requests automatically depending on the key you use. If your API key begins with `gsk_`, the client points directly to Groq's high-speed LPU models (like Llama-3.3-70b-versatile). If it starts with `xai-`, it switches to the native xAI Grok endpoints.
 
-### 2. Element Detection: Viewport-Filtered DOM vs. Vision
-Relying *solely* on coordinate-based vision models is highly fragile: window sizes, responsive layouts, zoom levels, and viewport scrolling cause coordinate mismatches. 
-Our **hybrid strategy** provides maximum reliability:
-*   **DOM-Text Primary Perception**: Extracts active inputs, textareas, selects, buttons, links (`<a>` tags), and custom elements styled with `cursor: pointer` or inline `onclick` handlers.
-*   **Viewport Filtering**: Discards elements outside the viewport scroll boundary (`rect.top` between `-200px` and `window.innerHeight + 800px`) to prevent token bloat and fit within rate limits.
-*   **Nesting Deduplication**: Automatically ignores generic child elements (spans, images, or svgs) inside interactive parent tags (buttons or links) to keep prompts concise.
-*   **Class Filter Regex**: Discards framework-specific dynamic classes containing special characters (`gap-1.5`, `w-1/2`, `h-[40px]`) and starting with digits, ensuring CSS selectors generated are standards-compliant and never crash the Playwright parser.
+### 2. Viewport-Filtered Element Extraction
+Standard coordinate-based vision models fail when page layouts shift, resize, or scroll. I used a hybrid DOM-text parser that:
+* Focuses only on active components like inputs, select dropdowns, textareas, links, buttons, and custom `cursor: pointer` elements.
+* Ignores nested elements (such as svgs or span tags inside a button) to prevent visual token bloat.
+* Filters out Tailwind framework utility classes containing special characters (like `.`, `/`, `[]`) to ensure selectors are standard-compliant and never crash Playwright.
+* Limits extraction to elements inside or near the current scroll viewport.
 
-### 3. Robust Locator Resolution & Action Fallbacks
-When the LLM requests action on a selector, our code provides self-healing paths:
-1.  **Fast-Path selector query**: If the selector contains CSS-like tokens (e.g. `.class`, `#id`, spaces, arrows, pseudo-selectors like `:has-text`), it bypasses other locator checks to resolve **instantly**, saving 2-3 seconds of query retries.
-2.  **Flexible fallback queries**: Falls back to accessible semantic labels (`page.get_by_label()`), placeholders (`page.get_by_placeholder()`), or roles.
-3.  **Forced Click Retry**: If a click is blocked by an overlay modal/sheet, it catches the pointer-interception error and retries with `force=True`. If that fails, it falls back to a raw coordinates hardware mouse click to bypass all actionability blocks.
-4.  **Keyboard Emulation typing**: If standard `.fill()` fails (e.g. read-only fields or framework-level blocks), it focuses the element, simulates `Ctrl+A` and `Backspace` to clear it, and types character-by-character via hardware keyboard emulation (`page.keyboard.type`).
-5.  **Browser Auto-Recovery**: Checks `is_session_healthy()` dynamically using `page.is_closed()` and `browser.is_connected()`. If the browser window is closed or crashed, it automatically spawns a new Chromium process, restarts the session, and re-navigates back to the current website.
+### 3. Action Recovery and Robust Click Handlers
+Web pages often present blockers like cookie overlays or disabled states. To handle this, the browser manager uses fallback handlers:
+* **Fast CSS Matching**: If a selector looks like standard CSS (with IDs or classes), it bypasses manual search for instant execution.
+* **Fallback Queries**: Resolves elements dynamically by accessible semantic labels, placeholder text, or roles if standard selectors are missing.
+* **Forced Actions**: Catches pointer interception exceptions and automatically retries clicks with `force=True`. If that fails, it executes a raw hardware mouse click directly at the coordinates.
+* **Character Keyboard Emulation**: If standard `.fill()` fails, it focuses the element and types text character-by-character while emulating keystrokes.
+* **Auto-Recovery**: Monitors browser state in the loop; if a window is closed by accident, it re-launches the process and navigates back to continue work.
 
 ---
 
-## 🚀 Setup and Installation
+## 🚀 Getting Started
 
 ### 1. Prerequisites
-Ensure you have Python 3.10+ installed on your system.
+Make sure you have Python 3.10+ installed.
 
-### 2. Clone and Install Dependencies
-Navigate to the directory and install dependencies:
+### 2. Install Dependencies
+Install the required packages:
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Install Playwright Browsers
-Download the Chromium browser binaries required by Playwright:
+Install the Playwright browser binaries:
 ```bash
 python3 -m playwright install chromium
 ```
 
 ---
 
-## 🔑 Configuration and API Keys
+## 🔑 Config and Setup
 
-The agent supports both xAI Grok and Groq Cloud endpoints natively based on the API key prefix provided in your `.env` file.
-
-### Step 1: Obtain an API Key
-*   **Option A: Groq Cloud (Recommended for Speed / Llama 3.3)**
-    1. Sign up at the [Groq Console](https://console.groq.com/).
-    2. Generate a new API Key (keys start with `gsk_`).
-*   **Option B: xAI Console (For Grok-native models)**
-    1. Sign up at the [xAI Console](https://console.x.ai/).
-    2. Generate an API Key (keys start with `xai-`).
-
-### Step 2: Configure Environment
-Create a `.env` file in the root folder (or copy `.env.example`):
+Copy the environment template and fill out your credentials:
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill out the fields:
+Open `.env` and adjust the variables:
 ```ini
-# For Groq (Default setup using your gsk_ key)
+# Groq setup (keys start with gsk_)
 XAI_API_KEY=gsk_your_groq_key_here
 XAI_API_BASE=https://api.groq.com/openai/v1
 XAI_MODEL=llama-3.3-70b-versatile
 
-# For xAI Grok (If using Grok-native key)
+# OR xAI Grok setup (keys start with xai-)
 # XAI_API_KEY=xai-your-grok-key-here
 # XAI_API_BASE=https://api.x.ai/v1
 # XAI_MODEL=grok-2-vision-1212
 
-# Automation target URL
+# Default targets
 TARGET_URL=https://www.google.com
-
-# Headless mode: Set to False to watch the browser work in real-time!
 HEADLESS=False
-
-# Safety boundary to prevent runaway loops/costs
 MAX_STEPS=10
 ```
 
 ---
 
-## 💻 How to Run
+## 💻 Running the App
 
-Execute the main controller:
+Run the main console:
 ```bash
 python3 main.py
 ```
 
-### 🎛️ Command Line Parameter Options
-You can configure the agent dynamically at startup using CLI options:
+### Command Line Flags
+You can configure options directly from the terminal:
 ```bash
-# Set a custom target URL, matrix theme, and run in visible headful mode
+# Launch with matrix green theme and headed window
 python3 main.py --url google.com --theme matrix --headful
 
-# Set retro console theme and run in headless background mode with a max step cap of 5
+# Run in headless mode with retro amber styling
 ./run_demo.sh --theme retro --headless --max-steps 5
 ```
 
@@ -200,55 +192,28 @@ python3 main.py --url google.com --theme matrix --headful
 | `--url` | `-u` | From `.env` | Initial target URL to open. |
 | `--headless` | | From `.env` | Run browser in hidden headless mode. |
 | `--headful` | | From `.env` | Run browser in visible headful window mode. |
-| `--theme` | `-t` | `cyberpunk` | CLI console color theme: `cyberpunk`, `retro` (amber), or `matrix` (green). |
-| `--max-steps`| `-s` | From `.env` | Maximum autonomous steps before task is terminated. |
-
-### 🤖 Two-Tiered Conversational Console Loop
-The program runs in a two-tiered interactive loop:
-1. **Website Prompt:** Enter a URL. The browser opens and loads that website.
-2. **Task Prompt:** Enter consecutive task instructions (e.g. *Type "John Doe"*, then *Click Submit*). The agent executes them sequentially **on the same active browser context**, preserving the page's scroll positions, filled text, cookies, and login states.
-
-*   **How to switch websites:** Type `exit` at the Task Prompt to close the current browser context and return to the Website Prompt.
-*   **How to quit the program:** Type `stop` at either the Website Prompt or the Task Prompt to close the browser and exit the program.
-*   **Non-interactive execution (CI/One-off runs):** You can bypass prompts and run a single default task then exit immediately using input redirection:
-    `echo -e "google.com\nType 'weather today' and press Enter\nexit\nstop" | python3 main.py`
-
-### Headless vs. Visible (Headed) Mode
-To watch the LLM click and type in the browser in real-time:
-1. Open your `.env` file.
-2. Change `HEADLESS=True` to `HEADLESS=False`.
-3. Re-run `python3 main.py`.
+| `--theme` | `-t` | `cyberpunk` | Color theme styling: `cyberpunk` (neon), `retro` (amber), or `matrix` (green). |
+| `--max-steps`| `-s` | From `.env` | Maximum autonomous steps allowed per task. |
 
 ---
 
-## 💰 Token and Cost Optimizations
+## 💡 Cost and Token Optimization
 
-1.  **Image Compression**: Screenshots are compressed to JPEG and scaled down to a maximum dimension of 800px with 80% quality (via Pillow) before encoding, saving up to 85% of standard visual tokens.
-2.  **History Compactor**: To prevent sending multiple screenshots repeatedly (which balloons the token size quadratically), the client runs a history compactor. It strips the image payloads from all past turns, preserving only the latest screenshot and the text logs of past operations.
-3.  **Nesting & Empty Element Pruning**: Our JS DOM extractor filters out elements without any label, alt text, title, or value text unless they are form inputs, reducing token size significantly.
-4.  **Strict 1-Image Constraint**: Keeps track of screenshot executions and suppresses coordinator final screenshots if the task already triggered a screenshot tool call, ensuring exactly one image is saved per task.
-
----
-
-## 📸 Screenshots and Verification
-
-During the run, the agent automatically captures and saves screenshots in the `screenshots/` directory. To avoid folder clutter, it guarantees **exactly one screenshot is captured per task**:
-1. **Explicit Request**: If your task description explicitly asks for a screenshot (e.g. *"take a screenshot of the toast notification"*), it saves that image and skips the automatic coordinator screenshot.
-2. **Fallback Proof**: If no screenshot is requested in the task description, the coordinator automatically takes exactly one success/failure screenshot at the end of execution (e.g., `task_1_success.png` or `task_1_failure.png`).
-3. **Debug/Error States**: Captured automatically if a fatal code exception occurs.
+To control token billing and avoid hitting rate limits:
+1. **Pillow Image Sizing**: Screenshots are compressed to JPEG format and scaled down to a maximum of 800px at 80% quality, saving up to 85% of standard visual tokens.
+2. **Context Compression**: Old images are stripped out from the past conversation history before calling the LLM; only the most recent screenshot is preserved.
+3. **Screenshot Deduplication**: The agent ensures exactly one screenshot is captured per task. If you ask the agent for a screenshot explicitly, it saves that file and skips the coordinator's automatic final screenshot.
+4. **Screenshot Organization**: All screenshots are automatically saved into separate host subdirectories under `screenshots/` based on the target website domain (e.g. `screenshots/google.com/`) to keep folders clean.
 
 ---
 
-## ❓ Troubleshooting and FAQ
+## ❓ Troubleshooting
 
 ### 1. API Rate Limits (Groq 429 Errors)
-*   **Symptom:** Terminal shows `WARNING: API Rate Limit hit... Backing off for 10 seconds`.
-*   **Solution:** Groq's free tier has strict rate limits. The agent automatically detects these limit limits, halts execution for 10 seconds, and retries the operation. No manual action is required.
+If you hit rate limits on free tiers, the LLM client automatically waits for 10 seconds and retries the request without halting the run.
 
-### 2. Browser process has been closed
-*   **Symptom:** The Chromium window is closed by accident, and standard actions report errors.
-*   **Solution:** The agent is self-healing. Before navigating or performing any task, it checks session health. If it detects the browser was closed, it automatically launches a fresh window and re-navigates back to your target URL.
+### 2. Closed Browser Windows
+If the browser window is closed mid-session, the agent's health checker detects the failure, launches a fresh window, and re-navigates back to the current site to resume.
 
-### 3. Click pointer-interception blocks
-*   **Symptom:** A cookie notice, sheet overlay, or modal blocks an element.
-*   **Solution:** Playwright tools will catch this interception, retry using `force=True`, and if that fails, trigger a raw mouse click at the element center coordinates to bypass standard visibility guards.
+### 3. Click Blocks
+If cookie banners or overlays intercept clicks, BrowseIQ retries with `force=True` and falls back to absolute coordinate mouse clicks if needed.
