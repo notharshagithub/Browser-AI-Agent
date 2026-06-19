@@ -185,6 +185,24 @@ Execute the main controller:
 python3 main.py
 ```
 
+### 🎛️ Command Line Parameter Options
+You can configure the agent dynamically at startup using CLI options:
+```bash
+# Set a custom target URL, matrix theme, and run in visible headful mode
+python3 main.py --url google.com --theme matrix --headful
+
+# Set retro console theme and run in headless background mode with a max step cap of 5
+./run_demo.sh --theme retro --headless --max-steps 5
+```
+
+| Flag | Shortcut | Default | Description |
+|---|---|---|---|
+| `--url` | `-u` | From `.env` | Initial target URL to open. |
+| `--headless` | | From `.env` | Run browser in hidden headless mode. |
+| `--headful` | | From `.env` | Run browser in visible headful window mode. |
+| `--theme` | `-t` | `cyberpunk` | CLI console color theme: `cyberpunk`, `retro` (amber), or `matrix` (green). |
+| `--max-steps`| `-s` | From `.env` | Maximum autonomous steps before task is terminated. |
+
 ### 🤖 Two-Tiered Conversational Console Loop
 The program runs in a two-tiered interactive loop:
 1. **Website Prompt:** Enter a URL. The browser opens and loads that website.
