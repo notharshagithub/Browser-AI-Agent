@@ -1,13 +1,19 @@
 import os
 from dotenv import load_dotenv
 
-# Load .env file
+# =========================================================================
+# Configuration Loader
+# This module loads env parameters from .env and configures global settings.
+# =========================================================================
+
+# Load env file secrets
 load_dotenv()
 
-# API Keys and Endpoint settings
+# The API keys are shared between Groq LPU API and xAI Grok endpoints
+# Groq keys usually start with 'gsk_', xAI keys start with 'xai-'
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 
-# Smart Auto-Detection based on API Key prefix
+# Auto-routing detection flag
 is_groq = XAI_API_KEY.startswith("gsk_")
 
 if is_groq:
