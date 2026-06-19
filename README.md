@@ -1,6 +1,6 @@
 # BrowseIQ
 
-BrowseIQ is a production-quality, runtime LLM-driven browser automation agent built for a university Gen-AI assignment. 
+BrowseIQ is a production-quality, runtime LLM-driven browser automation agent built by **Harsha Shetty** (@notharshagit) for a university Gen-AI assignment. 
 
 The agent operates on a **perceive-decide-act** loop: it visually inspects the page, extracts a compact set of interactive elements, sends this state to the LLM (Grok/Llama), decides which browser actions to call next (using native function-calling tools), and executes them via Playwright.
 
