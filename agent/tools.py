@@ -1,14 +1,15 @@
 import os
 import time
 import logging
-from playwright.sync_api import sync_playwright
+from typing import Optional, Union
+from playwright.sync_api import sync_playwright, Locator, Browser, BrowserContext, Page
 
 logger = logging.getLogger("agent.tools")
 
 class PlaywrightBrowserManager:
     """Manages the Playwright browser context, page state, and raw automation tools."""
     
-    def __init__(self, screenshots_dir: str, logs_dir: str):
+    def __init__(self, screenshots_dir: str, logs_dir: str) -> None:
         self.screenshots_dir = screenshots_dir
         self.logs_dir = logs_dir
         self.playwright = None
@@ -233,7 +234,7 @@ class PlaywrightBrowserManager:
             logger.error(msg)
             return {"success": False, "message": msg}
 
-    def resolve_locator(self, selector: str):
+    def resolve_locator(self, selector: str) -> Optional[Locator]:
         """Helper to resolve a text label, query selector, ID, etc. to a robust Playwright locator."""
         if not self.page:
             return None
