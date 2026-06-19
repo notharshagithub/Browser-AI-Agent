@@ -25,9 +25,12 @@ website-automation-agent/
 │   ├── tools.py          # Implementations of the 7 Playwright-backed browser tools
 │   ├── llm_client.py     # Groq/xAI API client, handles function-calling & history compaction
 │   └── agent.py          # Perceive-decide-act loop execution & system prompt
+├── tests/                # Unit test files
+│   └── test_config.py    # Unit tests for settings loading
 ├── screenshots/          # Saved timestamped run screenshots (before/after/proofs)
 ├── logs/                 # Console logs written to logs/agent.log
 ├── main.py               # Main entrypoint script
+├── run_demo.sh           # Bootstrap script to launch agent loop in one click
 ├── requirements.txt      # Python dependencies
 ├── .env                  # Environment secrets (ignored from Git)
 ├── .env.example          # Environment template
